@@ -1,0 +1,8 @@
+pokemon-drop-website/
+├── app.py
+├── monitor.py
+├── requirements.txt
+├── Procfile
+└── templates/
+    ├── index.html
+    └── history.html
