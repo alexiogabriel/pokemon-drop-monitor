@@ -1,0 +1,5 @@
+<script>
+if ("Notification" in window) {
+  Notification.requestPermission();
+}
+</script>
