@@ -1,0 +1,3 @@
+.drop-card.new {
+    border: 2px solid #ffcb05;
+}
