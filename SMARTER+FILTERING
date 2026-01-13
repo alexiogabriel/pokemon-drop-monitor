@@ -1,0 +1,51 @@
+import aiohttp, asyncio, hashlib
+from datetime import datetime
+
+HEADERS = {"User-Agent": "Mozilla/5.0"}
+CHECK_INTERVAL = 25
+
+KEYWORDS = ["etb", "elite trainer", "booster", "pokemon center"]
+
+STORES = {
+    "Pokémon Center": "https://www.pokemoncenter.com/search/pokemon",
+    "Target": "https://www.target.com/s?searchTerm=pokemon+cards",
+    "Walmart": "https://www.walmart.com/search?q=pokemon+cards",
+    "Best Buy": "https://www.bestbuy.com/site/searchpage.jsp?st=pokemon+cards",
+    "GameStop": "https://www.gamestop.com/search/?q=pokemon+cards"
+}
+
+seen = set()
+drops = []
+
+def is_relevant(text):
+    text = text.lower()
+    return any(k in text for k in KEYWORDS)
+
+async def check_store(session, store, url):
+    try:
+        async with session.get(url, headers=HEADERS, timeout=15) as r:
+            text = await r.text()
+            if not is_relevant(text):
+                return
+
+            h = hashlib.md5(text.encode()).hexdigest()
+            key = f"{store}-{h}"
+
+            if key not in seen:
+                seen.add(key)
+                drops.insert(0, {
+                    "store": store,
+                    "url": url,
+                    "time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "new": True
+                })
+    except:
+        pass
+
+async def monitor_loop():
+    async with aiohttp.ClientSession() as session:
+        while True:
+            await asyncio.gather(
+                *[check_store(session, s, u) for s, u in STORES.items()]
+            )
+            await asyncio.sleep(CHECK_INTERVAL)
