@@ -1,0 +1,30 @@
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+import asyncio, monitor
+
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+
+@app.on_event("startup")
+async def startup():
+    asyncio.create_task(monitor.monitor_loop())
+
+@app.get("/")
+async def home(request: Request):
+    for d in monitor.drops[:10]:
+        d["new"] = False
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "drops": monitor.drops[:10]}
+    )
+
+@app.get("/history")
+async def history(request: Request):
+    return templates.TemplateResponse(
+        "history.html",
+        {"request": request, "drops": monitor.drops}
+    )
+
+@app.get("/status")
+async def status():
+    return {"drops": len(monitor.drops)}
